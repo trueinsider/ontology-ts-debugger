@@ -58,5 +58,7 @@
     "webpack-cli": "^2.1.4",
     "webpack-node-externals": "^1.7.2"
   },
-  "dependencies": {}
+  "dependencies": {
+    "ontology-ts-vm": "^0.1.0"
+  }
 }
