@@ -58,7 +58,6 @@ export class Debugger {
   }
 
   stepOverLine() {
-    let nextLine: number;
     let breakAtNext = false;
     const entries = Object.entries(this.lineMappings);
     for (const e of entries) {
@@ -66,7 +65,6 @@ export class Debugger {
       // @ts-ignore
       const pointer: number = e[1];
       if (breakAtNext) {
-        nextLine = line;
         this.stopAtInstructionPointer = pointer;
         break;
       }
