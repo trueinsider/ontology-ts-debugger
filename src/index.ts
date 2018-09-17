@@ -1,8 +1,9 @@
-import { ScEnvironment } from 'ontology-ts-vm';
+import { Address, ScEnvironment } from 'ontology-ts-vm';
 
 export class Debugger {
   private env: ScEnvironment;
-  private address: Buffer;
+  private addressBuffer: Buffer;
+  private address: Address;
   private lineMappings: {};
   private breakpoints: number[] = [];
   private instructionPointer: number;
@@ -11,7 +12,8 @@ export class Debugger {
 
   constructor(contract: Buffer, lineMappings: any = {}) {
     this.env = new ScEnvironment();
-    this.address = this.env.deployContract(contract);
+    this.addressBuffer = this.env.deployContract(contract);
+    this.address = Address.parseFromBytes(this.addressBuffer);
     this.lineMappings = lineMappings;
   }
 
@@ -82,9 +84,11 @@ export class Debugger {
   }
 
   async execute(args: Buffer[]) {
-    const call = Buffer.concat([...args, new Buffer([103]), this.address]);
-    // TODO: check current contract address when stopping
+    const call = Buffer.concat([...args, new Buffer([103]), this.addressBuffer]);
     return await this.env.execute(call, { inspect: async (data) => {
+      if (!data.contractAddress.equals(this.address)) {
+        return true;
+      }
       this.instructionPointer = data.instructionPointer;
       // console.log({opName: data.opName, instructionPointer: data.instructionPointer});
       if (this.breakpoints.includes(data.instructionPointer) ||
