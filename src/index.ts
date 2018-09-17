@@ -81,8 +81,8 @@ export class Debugger {
     }
   }
 
-  async execute(args: Buffer) {
-    const call = Buffer.concat([args, new Buffer([103]), this.address]);
+  async execute(args: Buffer[]) {
+    const call = Buffer.concat([...args, new Buffer([103]), this.address]);
     return await this.env.execute(call, { inspect: async (data) => {
       this.instructionPointer = data.instructionPointer;
       if (this.breakpoints.includes(data.instructionPointer) ||
