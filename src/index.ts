@@ -83,8 +83,10 @@ export class Debugger {
 
   async execute(args: Buffer[]) {
     const call = Buffer.concat([...args, new Buffer([103]), this.address]);
+    // TODO: check current contract address when stopping
     return await this.env.execute(call, { inspect: async (data) => {
       this.instructionPointer = data.instructionPointer;
+      // console.log({opName: data.opName, instructionPointer: data.instructionPointer});
       if (this.breakpoints.includes(data.instructionPointer) ||
         this.stopAtInstructionPointer === data.instructionPointer) {
         this.stopAtInstructionPointer = undefined;
