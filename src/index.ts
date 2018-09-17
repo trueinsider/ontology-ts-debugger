@@ -59,21 +59,26 @@ export class Debugger {
 
   stepOverLine() {
     let breakAtNext = false;
-    const entries = Object.entries(this.lineMappings);
-    for (const e of entries) {
-      const line = parseInt(e[0], 10);
-      // @ts-ignore
-      const pointer: number = e[1];
+    const values: number[] = Object.values(this.lineMappings);
+    for (const pointer of values) {
       if (breakAtNext) {
         this.stopAtInstructionPointer = pointer;
+        this.continue();
         break;
       }
       if (pointer >= this.instructionPointer) {
         breakAtNext = true;
       }
     }
+  }
 
-    this.continue();
+  runToLine(line: number) {
+    // @ts-ignore
+    const pointer: number = this.lineMappings[line];
+    if (pointer !== undefined) {
+      this.stopAtInstructionPointer = pointer;
+      this.continue();
+    }
   }
 
   async execute(args: Buffer) {
