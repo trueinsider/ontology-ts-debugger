@@ -1,12 +1,11 @@
 import 'babel-polyfill';
 import { readFileSync } from 'fs';
-import { Debugger, LineMapping } from '../src';
-import { map as debugMap } from '../test/helloWorld.json';
+import * as rp from 'request-promise-native';
+import { Debugger } from '../src';
 
-function loadContract(path: string) {
+function loadCode(path: string) {
   const codeBuffer = readFileSync(path);
-  const codeString = codeBuffer.toString();
-  return new Buffer(codeString, 'hex');
+  return codeBuffer.toString();
 }
 
 class LineMapping {
@@ -16,9 +15,21 @@ class LineMapping {
 
 describe('Hello world test', () => {
   test('Hello', async () => {
-    const contract = loadContract('./test/helloWorld.avm');
+    const response = await rp({
+      method: 'POST',
+      url: 'https://smartxcompiler.ont.io/api/beta/python/compile',
+      strictSSL: false,
+      body: {
+        code: loadCode('./test/helloWorld.py')
+      },
+      json: true
+    });
+
+    const avm = response.avm;
+    const contract = new Buffer(avm.substring(2, avm.length - 1), 'hex');
 
     const lineMappings: any = {};
+    const debugMap = JSON.parse(response.debug).map;
     debugMap.forEach((m: LineMapping) => {
       lineMappings[m.file_line_no] = m.start;
     });
