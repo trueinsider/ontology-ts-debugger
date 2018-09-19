@@ -6,12 +6,12 @@ export class Debugger {
   private addressBuffer: Buffer;
   private address: Address;
   private lineMappings: {};
-  private onStop?: (line: any) => void = undefined;
+  private onStop?: (data: any) => void = undefined;
   private breakpoints: number[] = [];
   private stopAtInstructionPointer?: number;
   private resolve?: (value: boolean) => void = undefined;
 
-  constructor(contract: Buffer, lineMappings: any = {}, onStop?: (line: any) => void) {
+  constructor(contract: Buffer, lineMappings: any = {}, onStop?: (data: any) => void) {
     this.env = new ScEnvironment();
     this.addressBuffer = this.env.deployContract(contract);
     this.address = Address.parseFromBytes(this.addressBuffer);
@@ -98,7 +98,7 @@ export class Debugger {
         this.stopAtInstructionPointer = undefined;
         if (this.onStop !== undefined) {
           const currentLine = this.getCurrentLine();
-          this.onStop({ instructionPointer: this.instructionPointer, line: currentLine });
+          this.onStop({ instructionPointer: this.instructionPointer, line: currentLine, evaluationStack: data.evaluationStack });
         }
         return new Promise<boolean>((resolve) => {
           this.resolve = resolve;
