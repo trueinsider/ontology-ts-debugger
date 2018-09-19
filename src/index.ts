@@ -1,20 +1,22 @@
 import { Address, ScEnvironment } from 'ontology-ts-vm';
 
 export class Debugger {
+  instructionPointer: number;
   private env: ScEnvironment;
   private addressBuffer: Buffer;
   private address: Address;
   private lineMappings: {};
+  private onStop?: (line: any) => void = undefined;
   private breakpoints: number[] = [];
-  private instructionPointer: number;
   private stopAtInstructionPointer?: number;
   private resolve?: (value: boolean) => void = undefined;
 
-  constructor(contract: Buffer, lineMappings: any = {}) {
+  constructor(contract: Buffer, lineMappings: any = {}, onStop?: (line: any) => void) {
     this.env = new ScEnvironment();
     this.addressBuffer = this.env.deployContract(contract);
     this.address = Address.parseFromBytes(this.addressBuffer);
     this.lineMappings = lineMappings;
+    this.onStop = onStop;
   }
 
   addOpcodeBreakpoint(pointer: number) {
@@ -94,11 +96,24 @@ export class Debugger {
       if (this.breakpoints.includes(data.instructionPointer) ||
         this.stopAtInstructionPointer === data.instructionPointer) {
         this.stopAtInstructionPointer = undefined;
+        if (this.onStop !== undefined) {
+          const currentLine = this.getCurrentLine();
+          this.onStop({ instructionPointer: this.instructionPointer, line: currentLine });
+        }
         return new Promise<boolean>((resolve) => {
           this.resolve = resolve;
         });
       }
       return true;
     } });
+  }
+
+  private getCurrentLine() {
+    const entries: Array<[string, number]> = Object.entries(this.lineMappings);
+    for (const [line, pointer] of entries) {
+      if (pointer >= this.instructionPointer) {
+        return line;
+      }
+    }
   }
 }
