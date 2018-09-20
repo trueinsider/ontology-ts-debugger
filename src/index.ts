@@ -98,7 +98,7 @@ export class Debugger {
         this.stopAtInstructionPointer = undefined;
         if (this.onStop !== undefined) {
           const currentLine = this.getCurrentLine();
-          this.onStop({ instructionPointer: this.instructionPointer, line: currentLine, evaluationStack: data.evaluationStack });
+          this.onStop({ instructionPointer: this.instructionPointer, line: currentLine, evaluationStack: data.evaluationStack, altStack: data.altStack });
         }
         return new Promise<boolean>((resolve) => {
           this.resolve = resolve;
