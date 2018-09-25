@@ -10,6 +10,7 @@ export class Debugger {
   private breakpoints: number[] = [];
   private stopAtInstructionPointer?: number;
   private resolve?: (value: boolean) => void = undefined;
+  private history: any[] = [];
 
   constructor(contract: Buffer, lineMappings: any = {}, onStop?: (data: any) => void) {
     this.env = new ScEnvironment();
@@ -92,13 +93,18 @@ export class Debugger {
         return true;
       }
       this.instructionPointer = data.instructionPointer;
+      const evaluationStack = [];
+      for (let i = 0; i < data.evaluationStack.count(); i++) {
+        evaluationStack.push(data.evaluationStack.peek(i)!.toString());
+      }
+      this.history.push({instructionPointer: data.instructionPointer, opName: data.opName, evaluationStack});
       // console.log({opName: data.opName, instructionPointer: data.instructionPointer});
       if (this.breakpoints.includes(data.instructionPointer) ||
         this.stopAtInstructionPointer === data.instructionPointer) {
         this.stopAtInstructionPointer = undefined;
         if (this.onStop !== undefined) {
           const currentLine = this.getCurrentLine();
-          this.onStop({ instructionPointer: this.instructionPointer, line: currentLine, evaluationStack: data.evaluationStack, altStack: data.altStack });
+          this.onStop({ instructionPointer: this.instructionPointer, line: currentLine, evaluationStack: data.evaluationStack, altStack: data.altStack, history: this.history });
         }
         return new Promise<boolean>((resolve) => {
           this.resolve = resolve;
