@@ -116,10 +116,13 @@ export class Debugger {
 
   private getCurrentLine() {
     const entries: Array<[string, number]> = Object.entries(this.lineMappings);
+    let result;
     for (const [line, pointer] of entries) {
-      if (pointer >= this.instructionPointer) {
-        return line;
+      if (this.instructionPointer < pointer) {
+        break;
       }
+      result = line;
     }
+    return result;
   }
 }
