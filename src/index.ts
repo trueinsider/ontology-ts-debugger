@@ -57,6 +57,14 @@ export class Debugger {
     }
   }
 
+  stop() {
+    if (this.resolve !== undefined) {
+      const resolve = this.resolve;
+      this.resolve = undefined;
+      resolve(false);
+    }
+  }
+
   stepOverOpcode() {
     this.stopAtInstructionPointer = this.instructionPointer + 1;
     this.continue();
