@@ -1,6 +1,6 @@
 {
   "name": "ontology-ts-debugger",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "",
   "main": "./lib/index.js",
   "types": "./lib/types/index.d.ts",
@@ -61,6 +61,6 @@
     "webpack-node-externals": "^1.7.2"
   },
   "dependencies": {
-    "ontology-ts-vm": "^0.2.3"
+    "ontology-ts-vm": "^0.2.4"
   }
 }
