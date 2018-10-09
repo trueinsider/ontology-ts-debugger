@@ -1,19 +1,21 @@
-import { Address, ScEnvironment } from 'ontology-ts-vm';
+import { Address, RuntimeStateStore, ScEnvironment, StateStore } from 'ontology-ts-vm';
+
+export { RuntimeStateStore };
 
 export class Debugger {
   instructionPointer: number;
   private env: ScEnvironment;
-  private addressBuffer: Buffer;
-  private address: Address;
-  private lineMappings: {};
-  private onStop?: (data: any) => void = undefined;
+  private readonly addressBuffer: Buffer;
+  private readonly address: Address;
+  private readonly lineMappings: {};
+  private readonly onStop?: (data: any) => void = undefined;
   private breakpoints: number[] = [];
   private stopAtInstructionPointer?: number;
   private resolve?: (value: boolean) => void = undefined;
   private history: any[] = [];
 
-  constructor(contract: Buffer, lineMappings: any = {}, onStop?: (data: any) => void) {
-    this.env = new ScEnvironment();
+  constructor(contract: Buffer, lineMappings: any = {}, onStop?: (data: any) => void, store?: StateStore) {
+    this.env = new ScEnvironment({store});
     this.addressBuffer = this.env.deployContract(contract);
     this.address = Address.parseFromBytes(this.addressBuffer);
     this.lineMappings = lineMappings;
@@ -112,7 +114,13 @@ export class Debugger {
         this.stopAtInstructionPointer = undefined;
         if (this.onStop !== undefined) {
           const currentLine = this.getCurrentLine();
-          this.onStop({ instructionPointer: this.instructionPointer, line: currentLine, evaluationStack: data.evaluationStack, altStack: data.altStack, history: this.history });
+          this.onStop({
+            instructionPointer: this.instructionPointer,
+            line: currentLine,
+            evaluationStack: data.evaluationStack,
+            altStack: data.altStack,
+            history: this.history
+          });
         }
         return new Promise<boolean>((resolve) => {
           this.resolve = resolve;
