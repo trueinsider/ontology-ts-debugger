@@ -12,6 +12,7 @@ export class Debugger {
   private breakpoints: number[] = [];
   private stopAtInstructionPointer?: number;
   private stopAfterLine?: number;
+  private stopAfterInstructionPointer?: number;
   private resolve?: (value: boolean) => void = undefined;
   private history: any[] = [];
 
@@ -69,7 +70,7 @@ export class Debugger {
   }
 
   stepOverOpcode() {
-    this.stopAtInstructionPointer = this.instructionPointer + 1;
+    this.stopAfterInstructionPointer = this.instructionPointer;
     this.continue();
   }
 
@@ -105,9 +106,11 @@ export class Debugger {
       const currentLine = this.getCurrentLine();
       if (this.breakpoints.includes(data.instructionPointer) ||
         this.stopAtInstructionPointer === data.instructionPointer ||
-        (currentLine != null && this.stopAfterLine != null && currentLine > this.stopAfterLine)) {
+        (currentLine != null && this.stopAfterLine != null && currentLine !== this.stopAfterLine) ||
+        (this.stopAfterInstructionPointer != null && data.instructionPointer !== this.stopAfterInstructionPointer)) {
         this.stopAtInstructionPointer = undefined;
         this.stopAfterLine = undefined;
+        this.stopAfterInstructionPointer = undefined;
         if (this.onStop !== undefined) {
           this.onStop({
             instructionPointer: this.instructionPointer,
