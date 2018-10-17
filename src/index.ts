@@ -32,9 +32,9 @@ export class Debugger {
 
   addLineBreakpoint(line: number) {
     // @ts-ignore
-    const pointer: number = this.lineMappings[line].start;
+    const pointer: any = this.lineMappings[line];
     if (pointer !== undefined) {
-      this.addOpcodeBreakpoint(pointer);
+      this.addOpcodeBreakpoint(pointer.start);
     }
   }
 
@@ -47,9 +47,9 @@ export class Debugger {
 
   removeLineBreakpoint(line: number) {
     // @ts-ignore
-    const pointer: number = this.lineMappings[line].start;
+    const pointer: any = this.lineMappings[line];
     if (pointer !== undefined) {
-      this.removeOpcodeBreakpoint(pointer);
+      this.removeOpcodeBreakpoint(pointer.start);
     }
   }
 
@@ -81,9 +81,9 @@ export class Debugger {
 
   runToLine(line: number) {
     // @ts-ignore
-    const pointer: number = this.lineMappings[line].start;
+    const pointer: any = this.lineMappings[line];
     if (pointer !== undefined) {
-      this.stopAtInstructionPointer = pointer;
+      this.stopAtInstructionPointer = pointer.start;
       this.continue();
     }
   }
@@ -125,7 +125,7 @@ export class Debugger {
         });
       }
       return true;
-    } });
+    }, enableSecurity: false });
   }
 
   private getCurrentLine() {
