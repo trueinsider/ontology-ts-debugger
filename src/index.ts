@@ -1,4 +1,11 @@
-import { Address, RuntimeStateStore, ScEnvironment, StateStore } from 'ontology-ts-vm';
+import {
+  Address,
+  LogCallback,
+  NotificationCallback,
+  RuntimeStateStore,
+  ScEnvironment,
+  StateStore
+} from 'ontology-ts-vm';
 
 export { RuntimeStateStore };
 
@@ -9,6 +16,8 @@ export class Debugger {
   private readonly address: Address;
   private readonly lineMappings: {};
   private readonly onStop?: (data: any) => void = undefined;
+  private readonly notificationCallback?: NotificationCallback;
+  private readonly logCallback?: LogCallback;
   private breakpoints: number[] = [];
   private stopAtInstructionPointer?: number;
   private stopAfterLine?: number;
@@ -16,12 +25,21 @@ export class Debugger {
   private resolve?: (value: boolean) => void = undefined;
   private history: any[] = [];
 
-  constructor(contract: Buffer, lineMappings: any = {}, onStop?: (data: any) => void, store?: StateStore) {
+  constructor(
+    contract: Buffer,
+    lineMappings: any = {},
+    onStop?: (data: any) => void,
+    store?: StateStore,
+    notificationCallback?: NotificationCallback,
+    logCallback?: LogCallback
+  ) {
     this.env = new ScEnvironment({store});
     this.addressBuffer = this.env.deployContract(contract);
     this.address = Address.parseFromBytes(this.addressBuffer);
     this.lineMappings = lineMappings;
     this.onStop = onStop;
+    this.notificationCallback = notificationCallback;
+    this.logCallback = logCallback;
   }
 
   addOpcodeBreakpoint(pointer: number) {
@@ -125,7 +143,7 @@ export class Debugger {
         });
       }
       return true;
-    }, enableSecurity: false });
+    }, enableSecurity: false, notificationCallback: this.notificationCallback, logCallback: this.logCallback });
   }
 
   private getCurrentLine() {
