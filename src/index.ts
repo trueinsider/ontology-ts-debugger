@@ -11,6 +11,7 @@ export class Debugger {
   private readonly onStop?: (data: any) => void = undefined;
   private breakpoints: number[] = [];
   private stopAtInstructionPointer?: number;
+  private stopAfterLine?: number;
   private resolve?: (value: boolean) => void = undefined;
   private history: any[] = [];
 
@@ -30,7 +31,7 @@ export class Debugger {
 
   addLineBreakpoint(line: number) {
     // @ts-ignore
-    const pointer: number = this.lineMappings[line];
+    const pointer: number = this.lineMappings[line].start;
     if (pointer !== undefined) {
       this.addOpcodeBreakpoint(pointer);
     }
@@ -45,7 +46,7 @@ export class Debugger {
 
   removeLineBreakpoint(line: number) {
     // @ts-ignore
-    const pointer: number = this.lineMappings[line];
+    const pointer: number = this.lineMappings[line].start;
     if (pointer !== undefined) {
       this.removeOpcodeBreakpoint(pointer);
     }
@@ -73,23 +74,13 @@ export class Debugger {
   }
 
   stepOverLine() {
-    let breakAtNext = false;
-    const values: number[] = Object.values(this.lineMappings);
-    for (const pointer of values) {
-      if (breakAtNext) {
-        this.stopAtInstructionPointer = pointer;
-        this.continue();
-        break;
-      }
-      if (pointer >= this.instructionPointer) {
-        breakAtNext = true;
-      }
-    }
+    this.stopAfterLine = this.getCurrentLine();
+    this.continue();
   }
 
   runToLine(line: number) {
     // @ts-ignore
-    const pointer: number = this.lineMappings[line];
+    const pointer: number = this.lineMappings[line].start;
     if (pointer !== undefined) {
       this.stopAtInstructionPointer = pointer;
       this.continue();
@@ -102,18 +93,22 @@ export class Debugger {
       if (!data.contractAddress.equals(this.address)) {
         return true;
       }
+      if (data.opCode === 97) {
+        return true;
+      }
       this.instructionPointer = data.instructionPointer;
       const evaluationStack = [];
       for (let i = 0; i < data.evaluationStack.count(); i++) {
         evaluationStack.push(data.evaluationStack.peek(i)!.toString());
       }
       this.history.push({instructionPointer: data.instructionPointer, opName: data.opName, evaluationStack});
-      // console.log({opName: data.opName, instructionPointer: data.instructionPointer});
+      const currentLine = this.getCurrentLine();
       if (this.breakpoints.includes(data.instructionPointer) ||
-        this.stopAtInstructionPointer === data.instructionPointer) {
+        this.stopAtInstructionPointer === data.instructionPointer ||
+        (currentLine != null && this.stopAfterLine != null && currentLine > this.stopAfterLine)) {
         this.stopAtInstructionPointer = undefined;
+        this.stopAfterLine = undefined;
         if (this.onStop !== undefined) {
-          const currentLine = this.getCurrentLine();
           this.onStop({
             instructionPointer: this.instructionPointer,
             line: currentLine,
@@ -131,14 +126,11 @@ export class Debugger {
   }
 
   private getCurrentLine() {
-    const entries: Array<[string, number]> = Object.entries(this.lineMappings);
-    let result;
+    const entries: Array<[string, any]> = Object.entries(this.lineMappings);
     for (const [line, pointer] of entries) {
-      if (this.instructionPointer < pointer) {
-        break;
+      if (pointer.start <= this.instructionPointer && this.instructionPointer <= pointer.end) {
+        return parseInt(line, 10);
       }
-      result = line;
     }
-    return result;
   }
 }
