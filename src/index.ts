@@ -108,42 +108,48 @@ export class Debugger {
 
   async execute(args: Buffer[]) {
     const call = Buffer.concat([...args, new Buffer([103]), this.addressBuffer]);
-    return await this.env.execute(call, { inspect: async (data) => {
-      if (!data.contractAddress.equals(this.address)) {
-        return true;
-      }
-      if (data.opCode === 97) {
-        return true;
-      }
-      this.instructionPointer = data.instructionPointer;
-      const evaluationStack = [];
-      for (let i = 0; i < data.evaluationStack.count(); i++) {
-        evaluationStack.push(data.evaluationStack.peek(i)!.toString());
-      }
-      this.history.push({instructionPointer: data.instructionPointer, opName: data.opName, evaluationStack});
-      const currentLine = this.getCurrentLine();
-      if (this.breakpoints.includes(data.instructionPointer) ||
-        this.stopAtInstructionPointer === data.instructionPointer ||
-        (currentLine != null && this.stopAfterLine != null && currentLine !== this.stopAfterLine) ||
-        (this.stopAfterInstructionPointer != null && data.instructionPointer !== this.stopAfterInstructionPointer)) {
-        this.stopAtInstructionPointer = undefined;
-        this.stopAfterLine = undefined;
-        this.stopAfterInstructionPointer = undefined;
-        if (this.onStop !== undefined) {
-          this.onStop({
-            instructionPointer: this.instructionPointer,
-            line: currentLine,
-            evaluationStack: data.evaluationStack,
-            altStack: data.altStack,
-            history: this.history
+    return await this.env.execute(call, {
+      inspect: async (data) => {
+        if (!data.contractAddress.equals(this.address)) {
+          return true;
+        }
+        if (data.opCode === 97) {
+          return true;
+        }
+        this.instructionPointer = data.instructionPointer;
+        const evaluationStack = [];
+        for (let i = 0; i < data.evaluationStack.count(); i++) {
+          evaluationStack.push(data.evaluationStack.peek(i)!.toString());
+        }
+        this.history.push({instructionPointer: data.instructionPointer, opName: data.opName, evaluationStack});
+        const currentLine = this.getCurrentLine();
+        if (this.breakpoints.includes(data.instructionPointer) ||
+          this.stopAtInstructionPointer === data.instructionPointer ||
+          (currentLine != null && this.stopAfterLine != null && currentLine !== this.stopAfterLine) ||
+          (this.stopAfterInstructionPointer != null && data.instructionPointer !== this.stopAfterInstructionPointer)) {
+          this.stopAtInstructionPointer = undefined;
+          this.stopAfterLine = undefined;
+          this.stopAfterInstructionPointer = undefined;
+          if (this.onStop !== undefined) {
+            this.onStop({
+              instructionPointer: this.instructionPointer,
+              line: currentLine,
+              evaluationStack: data.evaluationStack,
+              altStack: data.altStack,
+              history: this.history
+            });
+          }
+          return new Promise<boolean>((resolve) => {
+            this.resolve = resolve;
           });
         }
-        return new Promise<boolean>((resolve) => {
-          this.resolve = resolve;
-        });
-      }
-      return true;
-    }, enableSecurity: false, notificationCallback: this.notificationCallback, logCallback: this.logCallback });
+        return true;
+      },
+      enableSecurity: false,
+      enableGas: false,
+      notificationCallback: this.notificationCallback,
+      logCallback: this.logCallback
+    });
   }
 
   private getCurrentLine() {
